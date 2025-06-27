@@ -23,38 +23,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     instructorFilter.addEventListener('change', () => {
         const selectedInstructor = instructorFilter.value;
-        if (selectedInstructor === 'all') {
-            filterAndRedrawCalendar();
-            return;
-        }
+        if (selectedInstructor === 'all') { filterAndRedrawCalendar(); return; }
         typeFilter.value = 'all';
         locationFilter.value = 'all';
         document.querySelectorAll('#course-checkboxes input[type="checkbox"]').forEach(cb => {
             const course = allCourses.find(c => c.course_number === cb.value);
-            if (course && course.instructors.includes(selectedInstructor)) {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-            }
+            cb.checked = (course && course.instructors.includes(selectedInstructor));
         });
         filterAndRedrawCalendar();
     });
 
     typeFilter.addEventListener('change', () => {
         const selectedType = typeFilter.value;
-        if (selectedType === 'all') {
-            filterAndRedrawCalendar();
-            return;
-        }
+        if (selectedType === 'all') { filterAndRedrawCalendar(); return; }
         instructorFilter.value = 'all';
         locationFilter.value = 'all';
         document.querySelectorAll('#course-checkboxes input[type="checkbox"]').forEach(cb => {
             const course = allCourses.find(c => c.course_number === cb.value);
-            if (course && course.type === selectedType) {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-            }
+            cb.checked = (course && course.type && course.type.includes(selectedType));
         });
         filterAndRedrawCalendar();
     });
@@ -69,54 +55,36 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('#course-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
         filterAndRedrawCalendar();
     });
-
+    
     showAllChenBtn.addEventListener('click', () => {
         instructorFilter.value = 'all';
         typeFilter.value = 'all';
         locationFilter.value = 'all';
         document.querySelectorAll('#course-checkboxes input[type="checkbox"]').forEach(cb => {
-            if (cb.value.startsWith("CH EN")) {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-            }
+            cb.checked = cb.value.startsWith("CH EN");
         });
         filterAndRedrawCalendar();
     });
 
-    // --- MODIFIED --- This function now has greater variation in saturation and lightness.
+    // --- MODIFIED --- This function now splits by a comma
     function courseToHslColor(course) {
         const typeBaseHues = {
-            'Year 1': 103,   // Mountain Green
-            'Year 2': 180,   // Great Salt Lake
-            'Year 3': 41,    // Wasatch Sunrise
-            'Year 4': 0,     // Utah Red
-            'Elective': 196, // Granite Peak
-            'Graduate': 30,  // Orange
-            'Other': 230,    // Blue
+            'Year 1': 210, 'Year 2': 120, 'Year 3': 50,
+            'Year 4': 0, 'Elective': 280, 'Graduate': 30, 'Other': 300,
         };
-        
-        let baseHue = typeBaseHues[course.type] ?? 0;
-        
-        // Default to gray for unknown types
-        if (typeBaseHues[course.type] === undefined) {
-            baseHue = 0;
+        const primaryType = (course.type || '').split(',')[0].trim(); // Changed from ';' to ','
+        let baseHue = typeBaseHues[primaryType] ?? 0;
+        let saturation = 65;
+        if (typeBaseHues[primaryType] === undefined) {
+            saturation = 0;
         }
-
         let hash = 0;
         const str = course.course_number;
         for (let i = 0; i < str.length; i++) {
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
         }
-
-        // Generate saturation and lightness from the hash for more variety
-        const saturation = 50 + (Math.abs(hash) % 35); // Range: 55-84%
-        const lightness = 50 + (Math.abs(hash >> 8) % 35); // Range: 65-79%
-
-        // If the type was unknown, force saturation to 0 for a grayscale color
-        const finalSaturation = typeBaseHues[course.type] === undefined ? 0 : saturation;
-
-        return `hsl(${baseHue}, ${finalSaturation}%, ${lightness}%)`;
+        const hueVariation = (hash % 21) - 10;
+        return `hsl(${baseHue + hueVariation}, ${saturation}%, 70%)`;
     }
 
     function generateTimeSlots() {
@@ -134,10 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 allCourses = data.map(course => {
                     const timeString = course.time_of_day;
-                    if (!timeString || !timeString.match(/(\d{1,2}:\d{2})(AM|PM)/)) {
+                    if (!timeString || !timeString.match(/(\d{1,2}:\d{2}) (AM|PM)/)) {
                         return { ...course, startMinutes: null, endMinutes: null };
                     }
-                    const timeParts = timeString.match(/(\d{1,2}:\d{2})(AM|PM)/);
+                    const timeParts = timeString.match(/(\d{1,2}:\d{2}) (AM|PM)/);
                     const [time, ampm] = [timeParts[1], timeParts[2]];
                     let [hour, minute] = time.split(':').map(Number);
                     if (ampm === 'PM' && hour !== 12) hour += 12;
@@ -146,13 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const endMinutes = startMinutes + course.duration;
                     return { ...course, startMinutes, endMinutes };
                 });
-                
                 populateFilters(allCourses);
                 filterAndRedrawCalendar();
             })
             .catch(error => console.error('[FATAL] Error loading schedule data:', error));
     }
     
+    // --- MODIFIED --- This function now splits by a comma
     function populateFilters(courses) {
         courseColorMap.clear();
         courses.forEach(course => {
@@ -161,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         const uniqueCourses = [...new Set(courses.map(course => course.course_number))].sort();
-        const allInstructorNames = courses.flatMap(course => course.instructors.split(';').map(name => name.trim()));
+        const allInstructorNames = courses.flatMap(course => (course.instructors || '').split(';').map(name => name.trim()));
         const uniqueInstructors = [...new Set(allInstructorNames)].sort();
         uniqueInstructors.forEach(name => {
             if (name && name.toLowerCase() !== 'nan') {
@@ -171,7 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 instructorFilter.appendChild(option);
             }
         });
-        const uniqueTypes = [...new Set(courses.map(course => course.type))].sort();
+
+        const allTypeNames = courses.flatMap(course => (course.type || '').split(',').map(name => name.trim())); // Changed from ';' to ','
+        const uniqueTypes = [...new Set(allTypeNames)].sort();
         uniqueTypes.forEach(typeName => {
             if (typeName && typeName.toLowerCase() !== 'nan') {
                 const option = document.createElement('option');
@@ -180,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 typeFilter.appendChild(option);
             }
         });
+
         const allLocationNames = courses.flatMap(course => (course.location || '').split(';').map(name => name.trim()));
         const uniqueLocations = [...new Set(allLocationNames)].sort();
         uniqueLocations.forEach(locationName => {
@@ -213,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedCourses = Array.from(document.querySelectorAll('#course-checkboxes input:checked')).map(cb => cb.value);
         const filteredCourses = allCourses.filter(course => {
             const instructorMatch = (selectedInstructor === 'all' || (course.instructors && course.instructors.includes(selectedInstructor)));
-            const typeMatch = (selectedType === 'all' || course.type === selectedType);
+            const typeMatch = (selectedType === 'all' || (course.type && course.type.includes(selectedType)));
             const locationMatch = (selectedLocation === 'all' || (course.location && course.location.includes(selectedLocation)));
             const courseMatch = (selectedCourses.length === 0 || selectedCourses.includes(course.course_number));
             return instructorMatch && typeMatch && courseMatch && locationMatch;
@@ -303,55 +274,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculateAndDisplayMetrics(courses) {
         const primeTimeStart = 9 * 60;
-        const primeTimeEnd = 14 * 60;
+        const primeTimeEnd = 13 * 60 + 59;
         let mebRoomUsageMinutes = { "MEB 1292": 0, "MEB 2550": 0, "MEB 3520": 0 };
-        let mwfPrimeTimeMinutes = 0;
-        let trPrimeTimeMinutes = 0;
         let dailyMinutes = { Mo: 0, Tu: 0, We: 0, Th: 0, Fr: 0 };
+        const uniqueChenCourses = new Set();
+        const mwfPrimeTimeCoursesSet = new Set();
+        const trPrimeTimeCoursesSet = new Set();
+        const mfPrimeTimeCoursesSet = new Set();
+
         courses.forEach(course => {
-            if (!course.duration || !course.days || !course.startMinutes) return;
             if (course.course_number.startsWith("CH EN") || course.course_number.startsWith("ENGIN")) {
-                const courseLocations = (course.location || '').split(';').map(l => l.trim());
-                courseLocations.forEach(loc => {
-                    if (loc in mebRoomUsageMinutes) {
-                        mebRoomUsageMinutes[loc] += course.duration * course.days.length;
-                    }
-                });
-            }
-            if (course.course_number.startsWith("CH EN")) {
-                const courseNumStr = course.course_number.replace("CH EN", "").trim();
-                const courseNum = parseInt(courseNumStr, 10);
-                if (!isNaN(courseNum) && courseNum >= 1000 && courseNum <= 5999) {
-                    const courseEndMinutes = course.startMinutes + course.duration;
-                    const overlapStart = Math.max(course.startMinutes, primeTimeStart);
-                    const overlapEnd = Math.min(courseEndMinutes, primeTimeEnd);
-                    const primeMinutesForThisCourse = Math.max(0, overlapEnd - overlapStart);
-                    for (const dayChar of course.days) {
-                        const dayCode = dayMap[dayChar];
-                        if (!dayCode) continue;
-                        dailyMinutes[dayCode] += course.duration;
-                        if (dayChar === 'M' || dayChar === 'W' || dayChar === 'F') {
-                            mwfPrimeTimeMinutes += primeMinutesForThisCourse;
-                        } else if (dayChar === 'T' || dayChar === 'R') {
-                            trPrimeTimeMinutes += primeMinutesForThisCourse;
+                if (course.duration && course.days) {
+                    const courseLocations = (course.location || '').split(';').map(l => l.trim());
+                    courseLocations.forEach(loc => {
+                        if (loc in mebRoomUsageMinutes) {
+                            mebRoomUsageMinutes[loc] += course.duration * course.days.length;
                         }
-                    }
+                    });
                 }
             }
+            if (!course.course_number.startsWith("CH EN")) return;
+            const courseNumStr = course.course_number.replace("CH EN", "").trim();
+            const courseNum = parseInt(courseNumStr, 10);
+            if (isNaN(courseNum) || courseNum < 1000 || courseNum > 5999) return;
+            
+            uniqueChenCourses.add(course.course_number);
+
+            const startsInPrimeTime = course.startMinutes >= primeTimeStart && course.startMinutes <= primeTimeEnd;
+            if (startsInPrimeTime) {
+                mfPrimeTimeCoursesSet.add(course.course_number);
+                const isMwfCourse = course.days.includes('M') || course.days.includes('W') || course.days.includes('F');
+                const isTrCourse = course.days.includes('T') || course.days.includes('R');
+                if (isMwfCourse) mwfPrimeTimeCoursesSet.add(course.course_number);
+                if (isTrCourse) trPrimeTimeCoursesSet.add(course.course_number);
+            }
+            
+            for (const dayChar of course.days) {
+                const dayCode = dayMap[dayChar];
+                if (dayCode) dailyMinutes[dayCode] += course.duration;
+            }
         });
+
+        const totalSchedulableChenCourses = uniqueChenCourses.size;
+        const mwfPrimeTimeCourseCount = mwfPrimeTimeCoursesSet.size;
+        const trPrimeTimeCourseCount = trPrimeTimeCoursesSet.size;
+        const mfPrimeTimeCourseCount = mfPrimeTimeCoursesSet.size;
         const totalWeeklyMinutes = Object.values(dailyMinutes).reduce((sum, mins) => sum + mins, 0);
-        const totalPrimeTimeMinutes = mwfPrimeTimeMinutes + trPrimeTimeMinutes;
-        const totalMinutesOutsidePrime = totalWeeklyMinutes - totalPrimeTimeMinutes;
+
         document.getElementById('metric-meb-1292').textContent = (mebRoomUsageMinutes["MEB 1292"] / 60).toFixed(1);
         document.getElementById('metric-meb-2550').textContent = (mebRoomUsageMinutes["MEB 2550"] / 60).toFixed(1);
         document.getElementById('metric-meb-3520').textContent = (mebRoomUsageMinutes["MEB 3520"] / 60).toFixed(1);
-        const mwfPrimePercentage = (totalWeeklyMinutes > 0) ? (mwfPrimeTimeMinutes / totalWeeklyMinutes) * 100 : 0;
-        const trPrimePercentage = (totalWeeklyMinutes > 0) ? (trPrimeTimeMinutes / totalWeeklyMinutes) * 100 : 0;
-        const outsidePrimePercentage = (totalWeeklyMinutes > 0) ? (totalMinutesOutsidePrime / totalWeeklyMinutes) * 100 : 0;
-        document.getElementById('metric-mwf-prime').textContent = mwfPrimePercentage.toFixed(0);
-        document.getElementById('metric-tr-prime').textContent = trPrimePercentage.toFixed(0);
-        document.getElementById('metric-outside-prime-hrs').textContent = (totalMinutesOutsidePrime / 60).toFixed(1);
-        document.getElementById('metric-outside-prime-pct').textContent = outsidePrimePercentage.toFixed(0);
+        const mwfPrimePercentage = (totalSchedulableChenCourses > 0) ? (mwfPrimeTimeCourseCount / totalSchedulableChenCourses) * 100 : 0;
+        const trPrimePercentage = (totalSchedulableChenCourses > 0) ? (trPrimeTimeCourseCount / totalSchedulableChenCourses) * 100 : 0;
+        const mfPrimePercentage = (totalSchedulableChenCourses > 0) ? (mfPrimeTimeCourseCount / totalSchedulableChenCourses) * 100 : 0;
+        
+        document.getElementById('metric-mwf-prime-pct').textContent = mwfPrimePercentage.toFixed(0);
+        document.getElementById('metric-tr-prime-pct').textContent = trPrimePercentage.toFixed(0);
+        document.getElementById('metric-mf-prime-pct').textContent = mfPrimePercentage.toFixed(0);
+        
+        document.getElementById('metric-mwf-prime-count').textContent = mwfPrimeTimeCourseCount;
+        document.getElementById('metric-tr-prime-count').textContent = trPrimeTimeCourseCount;
+        document.getElementById('metric-mf-prime-count').textContent = mfPrimeTimeCourseCount;
+        document.getElementById('metric-total-chen-courses').textContent = totalSchedulableChenCourses;
+
         document.getElementById('metric-mo-hrs').textContent = (dailyMinutes.Mo / 60).toFixed(1);
         document.getElementById('metric-tu-hrs').textContent = (dailyMinutes.Tu / 60).toFixed(1);
         document.getElementById('metric-we-hrs').textContent = (dailyMinutes.We / 60).toFixed(1);
@@ -369,6 +354,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const column = document.querySelector(`.day-content[data-day="${day}"]`);
         if (!column) return;
         
+        const tooltip = document.getElementById('course-tooltip');
+        
         const minutesSinceCalendarStart = course.startMinutes - (START_HOUR * 60);
         const topPosition = minutesSinceCalendarStart;
         const height = course.duration;
@@ -385,10 +372,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const color = courseColorMap.get(course.course_number) || '#a3c4f3';
         eventDiv.style.backgroundColor = color;
         eventDiv.style.borderColor = color;
-
-        eventDiv.innerHTML = `
-            <div class="event-title">${course.course_number}</div>
-            <div class="event-tooltip">
+    
+        eventDiv.innerHTML = `<div class="event-title">${course.course_number}</div>`;
+                
+        column.appendChild(eventDiv);
+        
+        eventDiv.addEventListener('mouseover', () => {
+            tooltip.innerHTML = `
                 <strong>Course:</strong> ${course.course_number}<br>
                 <strong>Instructor:</strong> ${course.instructors}<br>
                 <strong>Time:</strong> ${course.time_of_day}<br>
@@ -397,24 +387,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong>Duration:</strong> ${course.duration} min<br>
                 ${course.notes ? `<strong>Notes:</strong> ${course.notes}<br>` : ''}
                 ${course.anticipated_enrollment ? `<strong>Anticipated Enrollment:</strong> ${course.anticipated_enrollment}` : ''}
-            </div>`;
-            
-        column.appendChild(eventDiv);
-        
-        eventDiv.addEventListener('mouseover', () => {
-            const tooltip = eventDiv.querySelector('.event-tooltip');
-            tooltip.classList.add('tooltip-visible');
-            const tooltipRect = tooltip.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
-            if (tooltipRect.right > viewportWidth) {
-                tooltip.classList.add('tooltip-left');
-            }
+            `;
+            tooltip.style.display = 'block';
         });
-
+    
         eventDiv.addEventListener('mouseout', () => {
-            const tooltip = eventDiv.querySelector('.event-tooltip');
-            tooltip.classList.remove('tooltip-visible');
-            tooltip.classList.remove('tooltip-left');
+            tooltip.style.display = 'none';
+            tooltip.innerHTML = ''; 
+        });
+    
+        eventDiv.addEventListener('mousemove', (e) => {
+            tooltip.style.left = e.clientX + 15 + 'px';
+            tooltip.style.top = e.clientY + 15 + 'px';
         });
     }
 });
