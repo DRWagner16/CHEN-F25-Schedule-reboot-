@@ -238,3 +238,11 @@ h1, h2, h3 {
         align-items: stretch;
     }
 }
+.page-footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    color: #666;
+    font-size: 0.9em;
+}
