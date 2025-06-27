@@ -41,7 +41,7 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add S26schedule.json
+          git add F25schedule.json
           # Check if there are changes to commit
           if ! git diff --staged --quiet; then
             git commit -m "Automated schedule data update"
