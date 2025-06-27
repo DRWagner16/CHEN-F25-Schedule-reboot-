@@ -11,8 +11,8 @@
 
     <div class="page-container"> 
         
-        <h1>Fall 2025 CH EN Course Schedule - REBOOT</h1>
-        <h2 style="color: #BE0000;">Only courses that use campus rooms are in the calendar</h2>
+        <h1>Fall 2025 CH EN Course Schedule</h1>
+        <h2 style="color: #BE0000;">Only courses that have a meeting pattern are shown in the calendar</h2>
         <h3>Hover over a course for more information</h3>
 
         <div class="filters">
@@ -47,8 +47,7 @@
 
         <div class="course-filter-container">
             <h3>Filter by Course (select multiple)</h3>
-            <div id="course-checkboxes" class="checkbox-container">
-            </div>
+            <div id="course-checkboxes" class="checkbox-container"></div>
         </div>
 
         <div class="calendar-container">
@@ -65,7 +64,7 @@
         </div>
         
         <div class="course-table-container">
-            <h2>CH EN Course List (filters applied)</h2>
+            <h2>CH EN Course List</h2>
             <table class="course-table">
                 <thead>
                     <tr>
@@ -75,22 +74,21 @@
                         <th>Days</th>
                         <th>Instructor(s)</th>
                         <th>Location(s)</th>
-                        <th>Anticipated Enrollment</th>
+                        <th>Enrollment</th>
                         <th>Notes</th>
                     </tr>
                 </thead>
-                <tbody id="course-table-body">
-                    </tbody>
+                <tbody id="course-table-body"></tbody>
             </table>
         </div>
 
         <div class="unscheduled-courses-container">
-            <h2>Courses Without Fixed Schedules (filters appiled)</h2>
+            <h2>Courses Without Meeting Patterns (filtered)</h2>
             <ul id="unscheduled-courses-list"></ul>
         </div>
 
         <div class="metrics-dashboard">
-            <h2>Schedule Analysis - CH EN UNDERGRAD ONLY (filters applied)</h2>
+            <h2>Schedule Analysis of Filtered CH EN Courses</h2>
             <div class="metric-section">
                 <h4>MEB Room Usage (hrs/week) - Includes ENGIN 1022 Usage</h4>
                 <div class="metric-item">MEB 1292: <strong id="metric-meb-1292">0.0</strong></div>
@@ -99,10 +97,19 @@
             </div>
             <hr style="margin: 20px 0;">
             <div class="metric-section">
-                <h4>Primetime Usage (9am - 2pm)</h4>
-                <div class="metric-item">MWF Primetime: <strong id="metric-mwf-prime">0</strong>% of total weekly hours</div>
-                <div class="metric-item">TuTh Primetime: <strong id="metric-tr-prime">0</strong>% of total weekly hours</div>
-                <div class="metric-item">Total Hours Outside Prime Time: <strong id="metric-outside-prime-hrs">0.0</strong> hrs (<strong id="metric-outside-prime-pct">0</strong>%)</div>
+                <h4>Primetime Analysis (9am - 1:59pm)</h4>
+                <p style="font-size: 0.9em; color: #555;">(% of total schedulable undergrad CH EN courses)</p>
+                <div class="metric-item">Courses with a MWF component starting in Primetime: <strong id="metric-mwf-prime-pct">0</strong>%</div>
+                <div class="metric-item">Courses with a TR component starting in Primetime: <strong id="metric-tr-prime-pct">0</strong>%</div>
+                <div class="metric-item">Total Courses starting in Prime Time (M-F): <strong id="metric-mf-prime-pct">0</strong>%</div>
+                <div class="intermediate-values">
+                    <hr>
+                    <p><strong>Calculation Values:</strong></p>
+                    <span class="metric-item-small">MWF Primetime Courses: <strong id="metric-mwf-prime-count">0</strong></span>
+                    <span class="metric-item-small">TR Primetime Courses: <strong id="metric-tr-prime-count">0</strong></span>
+                    <span class="metric-item-small">Total Primetime Courses: <strong id="metric-mf-prime-count">0</strong></span>
+                    <span class="metric-item-small">Total Schedulable CH EN Courses: <strong id="metric-total-chen-courses">0</strong></span>
+                </div>
             </div>
             <hr style="margin: 20px 0;">
             <div class="metric-section">
@@ -116,6 +123,11 @@
             </div>
         </div>
 
-    </div> <script src="script.js"></script>
+    </div>
+
+    <script src="script.js"></script>
+
+    <div id="course-tooltip" class="event-tooltip"></div>
+
 </body>
 </html>
