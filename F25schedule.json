@@ -227,7 +227,7 @@
         "duration": 180.0,
         "location": "MEB 2550; MEB 3520",
         "type": "Year 3",
-        "notes": "",
+        "notes": "Consider Michael H.?",
         "anticipated_enrollment": "27"
     },
     {
@@ -491,7 +491,7 @@
         "duration": 80.0,
         "location": "WEB L122",
         "type": "Graduate",
-        "notes": "",
+        "notes": "Tao in 2026?",
         "anticipated_enrollment": "20"
     },
     {
@@ -555,7 +555,7 @@
         "days": "F",
         "time_of_day": "11:50 AM-12:50 PM",
         "duration": 60.0,
-        "location": "WEB 1248",
+        "location": "WEB L103",
         "type": "Graduate",
         "notes": "Consider putting Marc on this?",
         "anticipated_enrollment": "30"
